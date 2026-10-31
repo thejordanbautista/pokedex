@@ -20,6 +20,10 @@ import numpy as np  # noqa: E402
 from PIL import Image  # noqa: E402
 
 from pokedex import classifier, config  # noqa: E402
+
+if "--force-opencv" in sys.argv:  # test the OpenCV fallback even where LiteRT works
+    sys.argv.remove("--force-opencv")
+    classifier.TFLiteClassifier.__init__ = lambda *a, **k: (_ for _ in ()).throw(ImportError("forced off"))
 from pokedex.dex import Dex  # noqa: E402
 
 
@@ -59,7 +63,7 @@ def run() -> None:
         report("error", f"No world model loaded on {platform.system()} {platform.machine()} "
                f"Python {platform.python_version()}: {why}")
         sys.exit(1)
-    report("notice", f"Model input {model.w}x{model.h} {model.inp['dtype'].__name__} q={model.inp.get('quantization')}, "
+    report("notice", f"Backend {model.backend}. Model input {model.w}x{model.h} {getattr(model.inp['dtype'], '__name__', model.inp['dtype'])} q={model.inp.get('quantization')}, "
            f"output q={model.out.get('quantization')}, {len(model.labels)} labels, first={model.labels[:2]}")
     dex = Dex.load(cfg.data_dir / "world.json")
     dex.expand_ranges(model.labels)

@@ -63,6 +63,7 @@ class Classifier:
 
 class TFLiteClassifier(Classifier):
     available = True
+    backend = "litert"
 
     def __init__(self, model_path: Path, labels_path: Path, threads: int = 4):
         Interpreter = _interpreter_class()
@@ -105,6 +106,39 @@ class TFLiteClassifier(Classifier):
         return [(self.labels[i] if i < len(self.labels) else str(i), float(probs[i])) for i in idx]
 
 
+class OpenCVTFLiteClassifier(Classifier):
+    """Fallback that runs a .tflite model with OpenCV's DNN module (OpenCV 4.8+), for machines
+    where no TFLite runtime installs cleanly (e.g. ai-edge-litert on macOS + Python 3.9)."""
+
+    available = True
+    backend = "opencv-dnn"
+
+    def __init__(self, model_path: Path, labels_path: Path, size: int = 224):
+        import cv2
+
+        if not hasattr(cv2.dnn, "readNetFromTFLite"):
+            raise ImportError(f"OpenCV {cv2.__version__} can't read .tflite (needs 4.8+)")
+        self.cv2 = cv2
+        self.net = cv2.dnn.readNetFromTFLite(str(model_path))
+        self.w = self.h = size
+        self.labels = load_labels(labels_path)
+        # Same field names as TFLiteClassifier so diagnostics can print them
+        self.inp = {"dtype": np.uint8, "quantization": "handled by OpenCV"}
+        self.out = {"quantization": "handled by OpenCV"}
+        log.info("Loaded %s with OpenCV DNN %s", model_path.name, cv2.__version__)
+
+    def predict(self, frame: np.ndarray, top_k: int = 3) -> Prediction:
+        img = center_crop_resize(frame, (self.w, self.h))
+        blob = self.cv2.dnn.blobFromImage(img, scalefactor=1.0, size=(self.w, self.h), swapRB=False)
+        self.net.setInput(blob)
+        raw = np.asarray(self.net.forward())
+        probs = to_probabilities(raw)
+        if len(probs) == len(self.labels) + 1:
+            self.labels = ["background", *self.labels]
+        idx = np.argsort(probs)[::-1][:top_k]
+        return [(self.labels[i] if i < len(self.labels) else str(i), float(probs[i])) for i in idx]
+
+
 class MockClassifier(Classifier):
     """Stands in until a model exists: returns dex entries in turn so the UI can be developed."""
 
@@ -137,11 +171,14 @@ LOAD_ERRORS: dict[str, str] = {}  # model path -> why it failed to load, for dia
 
 def create(model_path: Path, labels_path: Path, fallback_labels: list[str]) -> Classifier:
     if Path(model_path).exists() and Path(labels_path).exists():
-        try:
-            return TFLiteClassifier(Path(model_path), Path(labels_path))
-        except Exception as e:
-            LOAD_ERRORS[str(model_path)] = f"{type(e).__name__}: {e}"
-            log.warning("Could not load %s (%s: %s); using mock classifier", model_path, type(e).__name__, e)
+        errors = []
+        for cls in (TFLiteClassifier, OpenCVTFLiteClassifier):
+            try:
+                return cls(Path(model_path), Path(labels_path))
+            except Exception as e:
+                errors.append(f"{cls.backend}: {type(e).__name__}: {e}")
+        LOAD_ERRORS[str(model_path)] = " || ".join(errors)
+        log.warning("Could not load %s (%s); using mock classifier", model_path, LOAD_ERRORS[str(model_path)])
     else:
         log.info("No model at %s; using mock classifier", model_path)
     return MockClassifier(fallback_labels)
