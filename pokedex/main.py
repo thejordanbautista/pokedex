@@ -217,7 +217,7 @@ class App:
             return self.toast
         if self.cam.name == "folder":
             why = self.cam.problems[0] if self.cam.problems else "chosen in settings"
-            return f"Using sample images (↑↓ to flip). Webcam: {why}"
+            return f"Using sample images (UP/DOWN to flip). Webcam: {why}"
         return ""
 
     def light_note(self, frame) -> str:

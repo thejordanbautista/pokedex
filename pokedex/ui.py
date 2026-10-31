@@ -55,6 +55,7 @@ class UI:
         self.f_big = pygame.font.Font(None, int(44 * u))
         self.f_mid = pygame.font.Font(None, int(30 * u))
         self.f_small = pygame.font.Font(None, int(24 * u))
+        self.f_tiny = pygame.font.Font(None, int(19 * u))
         pad = int(16 * u)
         self.pad = pad
         # Left: the "viewfinder" screen. Right: the info panel.
@@ -131,7 +132,8 @@ class UI:
             main = i == 0
             pygame.draw.rect(self.s, RED if main else WHITE, rect, border_radius=int(10 * u))
             pygame.draw.rect(self.s, DARK_RED if main else MUTED, rect, max(1, int(2 * u)), border_radius=int(10 * u))
-            img = self.f_small.render(label, True, WHITE if main else INK)
+            font = self.f_small if self.f_small.size(label)[0] <= w - int(10 * u) else self.f_tiny
+            img = font.render(label, True, WHITE if main else INK)
             self.s.blit(img, img.get_rect(center=rect.center))
             self.hits.append((rect, action))
             x += w + gap
@@ -207,7 +209,7 @@ class UI:
             y = self._text("Evolutions", self.f_mid, INK, x, y) + int(4 * u)
             chain = e.evolutions or [e.name]
             for name in chain:
-                mark = "▶ " if name.lower() == e.name.lower() else "   "
+                mark = "> " if name.lower() == e.name.lower() else "   "  # default font has no arrows
                 y = self._text(mark + name, self.f_small, INK, x, y)
 
         foot = []
