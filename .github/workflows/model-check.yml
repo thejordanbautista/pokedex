@@ -1,0 +1,27 @@
+name: world model
+
+# Downloads the real MobileNet model and scans a real photo, on the same setups people run:
+# macOS with its built-in Python 3.9, and Linux with Raspberry Pi OS's Python 3.11.
+on:
+  workflow_dispatch:
+  push:
+    paths: ["pokedex/classifier.py", "pokedex/dex.py", "data/world.json", "scripts/*world*", ".github/workflows/model-check.yml"]
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: macos-latest, python: "3.9"}
+          - {os: ubuntu-latest, python: "3.11"}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -r requirements.txt ai-edge-litert
+      - run: python scripts/fetch_world_model.py
+      - run: curl -sSfL -o dog.jpg https://storage.googleapis.com/download.tensorflow.org/example_images/YellowLabradorLooking_new.jpg
+      - run: python scripts/check_world_model.py dog.jpg --expect Dog

@@ -63,6 +63,10 @@ class App:
             "pokemon": classifier.create(cfg.pokemon_model, cfg.pokemon_labels, self.dexes["pokemon"].labels()),
             "world": classifier.create(cfg.world_model, cfg.world_labels, self.dexes["world"].labels()),
         }
+        for mode, model in self.models.items():
+            added = self.dexes[mode].expand_ranges(getattr(model, "labels", []) if model.available else [])
+            if added:
+                log.info("%s dex: %d extra model labels mapped by range", mode, added)
         self.seen = SeenLog(cfg.data_dir / "seen.json")
 
         self.mode = cfg.mode if cfg.mode in self.dexes else "pokemon"
@@ -108,7 +112,7 @@ class App:
 
     def _run_model(self, job: ScanJob) -> None:
         try:
-            job.result = self.models[self.mode].predict(job.frame)
+            job.result = self.models[self.mode].predict(job.frame, top_k=10)
         except Exception as e:
             log.exception("Recognition failed")
             job.error = str(e)
@@ -118,12 +122,12 @@ class App:
         job, self.job = self.job, None
         self.hw.lights(False)
         preds = job.result or []
-        best, conf = preds[0] if preds else (None, None)
-        entry = self.dex.lookup(best) if best else None
-        if entry and conf is not None and conf >= self.cfg.threshold:
+        entry, conf, top = self.dex.best(preds)
+        log.info("Scan: %s", ", ".join(f"{l} {c:.2f}" for l, c in preds[:5]) or "no result")
+        if entry and conf >= self.cfg.threshold:
             self.show_entry(entry, conf)
         else:
-            self.unknown = (best, conf)
+            self.unknown = (top, preds[0][1] if preds else None)
             self.state = "unknown"
             self.audio.say("No data. Please try again.")
 

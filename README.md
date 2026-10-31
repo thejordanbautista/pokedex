@@ -20,6 +20,12 @@ python -m pokedex --camera folder # cycle through samples/ instead of a webcam
 ```
 
 Without a model in `models/`, a mock classifier cycles through the dex so you can work on the UI.
+To make **World mode** recognize real animals and objects right away:
+
+```bash
+python scripts/fetch_world_model.py && pip install ai-edge-litert
+python -m pokedex --mode world      # point it at a mug, a banana, a dog...
+```
 
 **Webcam not showing?** Run `python -m pokedex.camera`. It tests each camera slot, saves a snapshot
 from each into `camera-test/`, and says why any slot failed. On macOS, allow your terminal in

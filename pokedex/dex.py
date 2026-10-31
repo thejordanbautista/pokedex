@@ -22,6 +22,8 @@ class Entry:
     description: str = ""
     evolutions: list[str] = field(default_factory=list)
     labels: list[str] = field(default_factory=list)  # model labels that map to this entry
+    # ImageNet class index ranges [first, last] (0-999) that also map here, e.g. all 118 dog breeds
+    imagenet_ranges: list[list[int]] = field(default_factory=list)
     sprite: str | None = None  # path relative to the assets dir
     cry: str | None = None
 
@@ -55,6 +57,41 @@ class Dex:
 
     def lookup(self, label: str) -> Entry | None:
         return self._by_label.get(normalize(label))
+
+    def expand_ranges(self, model_labels: list[str]) -> int:
+        """Map ImageNet index ranges to the model's label names. Handles label files with a
+        leading "background" class (1001 labels). Returns how many labels were added."""
+        if not model_labels:
+            return 0
+        offset = 1 if normalize(model_labels[0]) == "background" else 0
+        added = 0
+        for e in self.entries:
+            for first, last in e.imagenet_ranges:
+                for i in range(first + offset, min(last + offset, len(model_labels) - 1) + 1):
+                    key = normalize(model_labels[i])
+                    if key not in self._by_label:
+                        self._by_label[key] = e
+                        added += 1
+        return added
+
+    def best(self, predictions: list[tuple[str, float]]) -> tuple[Entry | None, float, str | None]:
+        """Pick the entry with the most total confidence across the model's top guesses.
+
+        A dog photo might score 0.30 golden retriever + 0.25 Labrador + 0.15 kuvasz: no single
+        label clears the threshold, but together they say "Dog" at 0.70.
+        Returns (entry or None, its summed confidence, the model's top label)."""
+        totals: dict[int, float] = {}
+        by_num: dict[int, Entry] = {}
+        for label, conf in predictions:
+            e = self.lookup(label)
+            if e:
+                totals[e.number] = totals.get(e.number, 0.0) + conf
+                by_num[e.number] = e
+        top = predictions[0][0] if predictions else None
+        if not totals:
+            return None, (predictions[0][1] if predictions else 0.0), top
+        num = max(totals, key=totals.get)
+        return by_num[num], min(totals[num], 1.0), top
 
     def __len__(self) -> int:
         return len(self.entries)

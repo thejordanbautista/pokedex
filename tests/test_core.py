@@ -54,3 +54,25 @@ def test_folder_camera_reads_samples():
     assert f.ndim == 3 and f.shape[2] == 3 and f.dtype == np.uint8
     cam.next_sample()
     assert cam.frame() is not None
+
+
+def test_imagenet_ranges_map_every_dog_breed():
+    dex = Dex.load(config.ROOT / "data/world.json")
+    # 1001-label file like MobileNet's: "background" first, then ImageNet classes 0-999
+    labels = ["background"] + [f"class{i}" for i in range(1000)]
+    labels[1 + 151], labels[1 + 268], labels[1 + 200] = "Chihuahua", "Mexican hairless", "Tibetan terrier"
+    labels[1 + 285] = "Egyptian cat"
+    assert dex.expand_ranges(labels) > 100
+    assert dex.lookup("Mexican hairless").name == "Dog"
+    assert dex.lookup("Tibetan terrier").name == "Dog"
+    assert dex.lookup("class150") is None and dex.lookup("class269") is None  # range edges
+    assert dex.lookup("class286") is None  # wild cats aren't "Cat"
+
+
+def test_best_pools_confidence_across_breeds():
+    dex = Dex.load(config.ROOT / "data/world.json")
+    preds = [("golden retriever", 0.30), ("tennis ball", 0.28), ("labrador retriever", 0.25), ("pug", 0.10)]
+    entry, conf, top = dex.best(preds)
+    assert entry.name == "Dog" and abs(conf - 0.65) < 1e-9 and top == "golden retriever"
+    entry, conf, top = dex.best([("toaster", 0.9)])
+    assert entry is None and conf == 0.9 and top == "toaster"
