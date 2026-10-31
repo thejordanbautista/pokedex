@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import threading
 import time
@@ -10,7 +11,7 @@ from dataclasses import dataclass, field
 
 import pygame
 
-from pokedex import audio, camera, classifier, config, controls
+from pokedex import audio, camera, classifier, config, controls, imaging
 from pokedex.controls import Action
 from pokedex.dex import Dex, Entry, SeenLog
 from pokedex.ui import UI
@@ -41,7 +42,11 @@ class App:
             pygame.mouse.set_visible(False)
         self.ui = UI(self.surface, cfg.assets_dir)
 
-        self.cam = camera.create(cfg.camera_source, cfg.camera_index, cfg.sample_dir)
+        self.camera_file = cfg.data_dir / "camera.json"
+        index = cfg.camera_index
+        if cfg.camera_source == "auto" and not cfg.camera_index_set:
+            index = self._remembered_camera(index)
+        self.cam = camera.create(cfg.camera_source, index, cfg.sample_dir)
         self.audio = audio.Audio(cfg.tts, cfg.piper_voice, cfg.volume)
         self.hw = controls.NoLights()
         if cfg.gpio:
@@ -70,6 +75,21 @@ class App:
         self.still = None  # frame frozen at scan time
         self.toast, self.toast_until = "", 0.0
 
+    def _remembered_camera(self, default: int) -> int:
+        try:
+            return int(json.loads(self.camera_file.read_text())["index"])
+        except Exception:
+            return default
+
+    def _remember_camera(self) -> None:
+        if self.cam.name != "opencv":
+            return
+        try:
+            self.camera_file.parent.mkdir(parents=True, exist_ok=True)
+            self.camera_file.write_text(json.dumps({"index": self.cam.index}))
+        except OSError as e:
+            log.warning("Could not save camera choice: %s", e)
+
     @property
     def dex(self) -> Dex:
         return self.dexes[self.mode]
@@ -79,6 +99,7 @@ class App:
         frame = self.cam.capture()
         if frame is None:
             return
+        frame = imaging.boost_low_light(frame)
         self.still = frame
         self.hw.lights(True)
         self.job = ScanJob(frame=frame, started=time.monotonic())
@@ -169,8 +190,10 @@ class App:
                 break
             except Exception as e:
                 log.info("Camera %s unavailable: %s", i, e)
-        self.toast = f"Camera: {self.camera_label()}"
-        self.toast_until = time.monotonic() + 2.5
+        self._remember_camera()
+        self.toast = f"Camera: {self.camera_label()} (press C again for the next one)"
+        self.toast_until = time.monotonic() + 3.0
+        log.info("Switched to %s", self.camera_label())
 
     def camera_label(self) -> str:
         if self.cam.name == "opencv":
@@ -187,14 +210,27 @@ class App:
             return f"Using sample images (↑↓ to flip). Webcam: {why}"
         return ""
 
+    def light_note(self, frame) -> str:
+        if frame is None or self.cam.name == "folder":
+            return ""
+        b = imaging.brightness(frame)
+        if b < camera.DARK:
+            return (f"{self.camera_label().capitalize()} is almost black. If it's your iPhone, "
+                    "press C for the next camera. Otherwise check the lens and add light.")
+        if b < imaging.DIM:
+            return "Low light: brightened automatically. Add light for better scans."
+        return ""
+
     # ---------- loop ----------
     def draw(self, t: float) -> None:
         self.ui.chrome(self.mode, self.seen.count(self.mode), len(self.dex), t, lights=self.state == "scanning")
         if self.state == "live":
-            notes = [self.camera_note()]
+            raw = self.cam.frame()
+            notes = [self.camera_note() or self.light_note(raw)]
             if not len(self.dex):
                 notes.append("No dex data yet: run scripts/fetch_pokeapi.py")
-            self.ui.live(self.cam.frame(), "  ".join(n for n in notes if n))
+            frame = imaging.boost_low_light(raw) if raw is not None else None
+            self.ui.live(frame, "  ".join(n for n in notes if n))
         elif self.state == "scanning":
             self.ui.scanning(self.still, t)
         elif self.state == "result":
@@ -228,6 +264,19 @@ class App:
             pygame.quit()
 
 
+def setup_logging(cfg: config.Config, verbose: bool = False) -> None:
+    """Log to the terminal and to pokedex.log (last run only), so problems can be read back later."""
+    fmt = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    try:
+        handlers.append(logging.FileHandler(config.ROOT / "pokedex.log", mode="w", encoding="utf-8"))
+    except OSError:
+        pass
+    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO, format=fmt, handlers=handlers, force=True)
+    import platform
+    log.info("Python %s, %s %s", platform.python_version(), platform.system(), platform.machine())
+
+
 def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(description="Real-life Pokédex")
     p.add_argument("--config", type=config.Path, help="path to config.toml")
@@ -242,12 +291,13 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args(argv)
 
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     cfg = config.load(args.config)
+    setup_logging(cfg, args.verbose)
     if args.camera:
         cfg.camera_source = args.camera
     if args.camera_index is not None:
         cfg.camera_index = args.camera_index
+        cfg.camera_index_set = True
     if args.mode:
         cfg.mode = args.mode
     if args.fullscreen:
@@ -259,4 +309,9 @@ def main(argv: list[str] | None = None) -> None:
     if args.no_tts:
         cfg.tts = "none"
 
-    App(cfg, max_frames=args.frames).run()
+    log.info("Starting Pokédex (%s)", " ".join(argv) if argv else "default options")
+    try:
+        App(cfg, max_frames=args.frames).run()
+    except Exception:
+        log.exception("Crashed")
+        raise

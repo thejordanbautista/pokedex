@@ -16,3 +16,5 @@ training/
 photos/
 test-photos/
 camera-test/
+pokedex.log
+data/camera.json

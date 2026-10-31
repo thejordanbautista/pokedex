@@ -34,6 +34,7 @@ class Config:
 
     camera_source: str = "auto"
     camera_index: int = 0
+    camera_index_set: bool = False  # True when given on the command line
     sample_dir: Path = ROOT / "samples"
 
     mode: str = "pokemon"

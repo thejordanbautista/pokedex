@@ -60,9 +60,36 @@ def test_warmup_skips_black_and_empty_frames(cams):
 
 
 def test_camera_that_never_sends_a_picture_is_rejected(cams):
-    cams({0: [BLACK]})
+    cams({0: [None]})  # opens, but every read fails
     with pytest.raises(RuntimeError, match="sent no picture"):
         camera.OpenCVCamera(0, warmup_seconds=0.2)
+
+
+def test_waits_for_auto_exposure_to_settle(cams):
+    # Mac cameras ramp from black to normal brightness: the settled frame is the one kept.
+    ramp = [np.full((480, 640, 3), v, np.uint8) for v in (1, 3, 12, 40, 80, 110, 120)] + [GOOD]
+    cams({0: ramp})
+    cam = camera.OpenCVCamera(0, warmup_seconds=1, settle_seconds=2)
+    assert cam.brightness > 100
+    cam.stop()
+
+
+def test_dark_iphone_is_skipped_for_working_camera(cams, monkeypatch):
+    # Your Mac: slot 0 refused, slot 1 = iPhone in a pocket (black), slot 2 = real camera.
+    monkeypatch.setattr(camera.sys, "platform", "darwin")
+    cams({0: None, 1: [BLACK], 2: [GOOD]})
+    cam = camera.create("auto", 0, config.ROOT / "samples")
+    assert cam.name == "opencv" and cam.index == 2
+    assert any("webcam 1 is almost black" in p for p in cam.problems)
+    cam.stop()
+
+
+def test_dark_camera_still_beats_sample_pictures(cams, monkeypatch):
+    monkeypatch.setattr(camera.sys, "platform", "darwin")
+    cams({0: None, 1: [BLACK]})  # the only real camera is dark: use it, the user can add light
+    cam = camera.create("auto", 0, config.ROOT / "samples")
+    assert cam.name == "opencv" and cam.index == 1
+    cam.stop()
 
 
 def test_dropped_frames_keep_last_good_picture(cams):
@@ -95,10 +122,12 @@ def test_auto_falls_back_to_samples_and_says_why(cams, monkeypatch):
 
 
 def test_diagnose_reports_each_slot(cams, tmp_path):
-    cams({0: None, 1: [GOOD]})
+    cams({0: None, 1: [BLACK], 2: [GOOD]})
     lines = camera.diagnose(max_index=3, out=tmp_path)
     text = "\n".join(lines)
     assert "webcam 0: webcam 0 would not open" in text
-    assert "webcam 1: OK, 640x480" in text
-    assert (tmp_path / "webcam_1.jpg").exists()
-    assert "--camera-index N" in text
+    assert "webcam 1: OK" in text and "almost black" in text and "Continuity Camera" in text
+    assert "webcam 2: OK, 640x480" in text
+    assert "Best slot: 2" in text
+    assert (tmp_path / "webcam_2.jpg").exists()
+    assert (tmp_path / "report.txt").read_text() == text + "\n"

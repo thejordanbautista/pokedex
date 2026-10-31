@@ -38,3 +38,26 @@ def test_navigation_without_crash(tmp_path):
         app.draw(0.0)
     assert app.handle(A.QUIT) is False
     pygame.quit()
+
+
+def test_camera_choice_is_remembered(tmp_path, monkeypatch):
+    import sys
+
+    sys.path.insert(0, str(config.ROOT / "tests"))
+    import test_camera as tc
+    from pokedex import camera
+
+    monkeypatch.setitem(sys.modules, "cv2", tc.fake_cv2({0: [tc.GOOD], 1: [tc.GOOD]}))
+    cfg = config.load()
+    cfg.tts, cfg.data_dir = "none", tmp_path
+    app = App(cfg, max_frames=1)
+    assert app.cam.index == 0
+    app.handle(controls.Action.CAMERA)  # user presses C: moves to slot 1, saved
+    assert app.cam.index == 1
+    app.cam.stop()
+    pygame.quit()
+
+    again = App(cfg, max_frames=1)  # next launch starts on slot 1
+    assert again.cam.index == 1
+    again.cam.stop()
+    pygame.quit()
