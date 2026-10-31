@@ -70,6 +70,9 @@ class App:
         self.seen = SeenLog(cfg.data_dir / "seen.json")
 
         self.mode = cfg.mode if cfg.mode in self.dexes else "pokemon"
+        if not len(self.dexes[self.mode]) and len(self.dexes["world"]):
+            log.info("No %s data yet; starting in World mode", self.mode)
+            self.mode = "world"
         self.state = "live"
         self.job: ScanJob | None = None
         self.result: tuple[Entry, float | None, bool] | None = None
@@ -144,6 +147,7 @@ class App:
     # ---------- input ----------
     def handle(self, action: Action) -> bool:
         """Returns False to quit."""
+        log.info("Button: %s (screen: %s)", action.value, self.state)
         if action == Action.QUIT:
             return False
         s = self.state
@@ -201,7 +205,9 @@ class App:
 
     def camera_label(self) -> str:
         if self.cam.name == "opencv":
-            return f"webcam {self.cam.index}"
+            f = self.cam.frame()
+            shape = f"{f.shape[1]}x{f.shape[0]}" if f is not None else "?"
+            return f"webcam {self.cam.index} ({shape})"
         if self.cam.name == "folder":
             return "sample images"
         return "Pi camera"
@@ -227,6 +233,7 @@ class App:
 
     # ---------- loop ----------
     def draw(self, t: float) -> None:
+        self.ui.begin_frame()
         self.ui.chrome(self.mode, self.seen.count(self.mode), len(self.dex), t, lights=self.state == "scanning")
         if self.state == "live":
             raw = self.cam.frame()
@@ -253,6 +260,9 @@ class App:
             while running:
                 for event in pygame.event.get():
                     action = controls.from_event(event)
+                    if action is None and event.type == pygame.MOUSEBUTTONDOWN and getattr(event, "button", 1) == 1:
+                        name = self.ui.hit_test(event.pos)
+                        action = Action(name) if name else None
                     if action and not self.handle(action):
                         running = False
                 if self.job and self.job.done.is_set() and time.monotonic() - self.job.started >= MIN_SCAN_SECONDS:
@@ -313,7 +323,12 @@ def main(argv: list[str] | None = None) -> None:
     if args.no_tts:
         cfg.tts = "none"
 
-    log.info("Starting Pokédex (%s)", " ".join(argv) if argv else "default options")
+    import sys
+
+    log.info("Starting Pokédex: %s", " ".join(sys.argv[1:] if argv is None else argv) or "default options")
+    names = camera.mac_camera_names()
+    if names:
+        log.info("Cameras macOS sees (not in slot order): %s", ", ".join(names))
     try:
         App(cfg, max_frames=args.frames).run()
     except Exception:

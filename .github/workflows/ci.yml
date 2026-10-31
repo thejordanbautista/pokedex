@@ -21,3 +21,10 @@ jobs:
       - run: python -m pyflakes pokedex scripts tests  # undefined names, unused imports
       - run: pytest -q
       - run: python -m pokedex --camera folder --no-tts --frames 30
+      - run: python scripts/screenshots.py
+        if: matrix.python-version == '3.13'
+      - uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.13'
+        with:
+          name: screenshots
+          path: screenshots/

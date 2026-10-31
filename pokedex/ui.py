@@ -62,6 +62,7 @@ class UI:
         self.view = pygame.Rect(pad, int(56 * u), vw - pad, self.h - int(56 * u) - pad)
         self.panel = pygame.Rect(vw + pad, int(56 * u), self.w - vw - 2 * pad, self.h - int(56 * u) - pad)
         self._sprites: dict[str, pygame.Surface | None] = {}
+        self.hits: list[tuple[pygame.Rect, str]] = []  # clickable areas -> action name, rebuilt each frame
 
     # ---------- chrome ----------
     def chrome(self, mode: str, seen: int, total: int, t: float, lights: bool = False) -> None:
@@ -103,8 +104,37 @@ class UI:
         self.s.blit(img, (x, y))
         return y + img.get_height()
 
-    def _hint(self, text: str) -> None:
-        self._text(text, self.f_small, MUTED, self.panel.x + self.pad, self.panel.bottom - int(30 * self.u))
+    def begin_frame(self) -> None:
+        self.hits = []
+
+    def hit_test(self, pos) -> str | None:
+        """Action name under a click or tap, or None."""
+        for rect, action in reversed(self.hits):  # last drawn = on top
+            if rect.collidepoint(pos):
+                return action
+        return None
+
+    def buttons(self, items: list[tuple[str, str]]) -> None:
+        """A row of clickable buttons along the bottom of the info panel.
+        items: (label, action name). The first one is the main action and is drawn in red."""
+        u, pad = self.u, self.pad
+        h = int(44 * u)
+        gap = int(8 * u)
+        y = self.panel.bottom - pad - h
+        x = self.panel.x + pad
+        width = self.panel.w - 2 * pad
+        weights = [2 if i == 0 else 1 for i in range(len(items))]
+        unit = (width - gap * (len(items) - 1)) / sum(weights)
+        for i, ((label, action), wt) in enumerate(zip(items, weights)):
+            w = int(unit * wt)
+            rect = pygame.Rect(x, y, w, h)
+            main = i == 0
+            pygame.draw.rect(self.s, RED if main else WHITE, rect, border_radius=int(10 * u))
+            pygame.draw.rect(self.s, DARK_RED if main else MUTED, rect, max(1, int(2 * u)), border_radius=int(10 * u))
+            img = self.f_small.render(label, True, WHITE if main else INK)
+            self.s.blit(img, img.get_rect(center=rect.center))
+            self.hits.append((rect, action))
+            x += w + gap
 
     # ---------- screens ----------
     def live(self, frame, note: str = "") -> None:
@@ -122,7 +152,8 @@ class UI:
         y += int(10 * self.u)
         for line in wrap(note, self.f_small, self.panel.w - 2 * self.pad)[:6]:
             y = self._text(line, self.f_small, DARK_RED, x, y)
-        self._hint("SCAN  ·  ◀▶ list  ·  M mode  ·  C camera")
+        self.hits.append((self.view.copy(), "scan"))  # click the camera view to scan
+        self.buttons([("SCAN", "scan"), ("DEX", "right"), ("MODE", "mode"), ("CAM", "camera")])
 
     def scanning(self, frame, t: float) -> None:
         self._blit_frame(frame)
@@ -185,8 +216,8 @@ class UI:
         if new:
             foot.append("NEW!")
         if foot:
-            self._text("  ·  ".join(foot), self.f_small, GREEN if new else MUTED, x, self.panel.bottom - int(56 * u))
-        self._hint("◀▶ page  ·  B back")
+            self._text("  ·  ".join(foot), self.f_small, GREEN if new else MUTED, x, self.panel.bottom - int(92 * u))
+        self.buttons([("SCAN", "scan"), ("PAGE", "right"), ("BACK", "b")])
 
     def unknown(self, frame, best: str | None, confidence: float | None) -> None:
         self._blit_frame(frame)
@@ -197,7 +228,7 @@ class UI:
             y = self._text(line, self.f_small, MUTED, x, y)
         if best:
             self._text(f"Best guess: {best} ({confidence:.0%})", self.f_small, MUTED, x, y + int(10 * self.u))
-        self._hint("SCAN again  ·  B back")
+        self.buttons([("SCAN AGAIN", "scan"), ("BACK", "b")])
 
     def listing(self, entries: list[Entry], cursor: int, seen) -> None:
         self._screen()
@@ -212,7 +243,7 @@ class UI:
             y += int(30 * self.u)
         self._panel()
         self._text("Dex list", self.f_big, INK, self.panel.x + self.pad, self.panel.y + self.pad)
-        self._hint("▲▼ move  ·  A open  ·  B back")
+        self.buttons([("OPEN", "a"), ("UP", "up"), ("DOWN", "down"), ("BACK", "b")])
 
     def _sprite(self, rel: str | None) -> pygame.Surface | None:
         if not rel:
