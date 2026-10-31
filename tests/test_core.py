@@ -35,7 +35,7 @@ def test_quantized_probabilities_not_softmaxed_twice():
     raw[209], raw[210], raw[300] = 180, 60, 34
     raw[400:430] = 1
     p = classifier.to_probabilities(raw, scale=1 / 256, zero_point=0)
-    assert p.argmax() == 209 and p[209] > 0.6
+    assert p.argmax() == 209 and abs(p[209] - 180 / 304) < 1e-6  # 0.59, not ~0.001
     assert np.isclose(p.sum(), 1.0)
 
 
