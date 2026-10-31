@@ -131,7 +131,7 @@ def create(model_path: Path, labels_path: Path, fallback_labels: list[str]) -> C
         try:
             return TFLiteClassifier(Path(model_path), Path(labels_path))
         except Exception as e:
-            log.warning("Could not load %s (%s); using mock classifier", model_path, e)
+            log.warning("Could not load %s (%s: %s); using mock classifier", model_path, type(e).__name__, e)
     else:
         log.info("No model at %s; using mock classifier", model_path)
     return MockClassifier(fallback_labels)
