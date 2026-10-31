@@ -45,7 +45,6 @@ def test_camera_choice_is_remembered(tmp_path, monkeypatch):
 
     sys.path.insert(0, str(config.ROOT / "tests"))
     import test_camera as tc
-    from pokedex import camera
 
     monkeypatch.setitem(sys.modules, "cv2", tc.fake_cv2({0: [tc.GOOD], 1: [tc.GOOD]}))
     cfg = config.load()
