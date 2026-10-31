@@ -1,0 +1,15 @@
+# Add to /boot/firmware/config.txt (then reboot). Only keep the lines for parts you have.
+
+# Camera: auto-detect works for official modules
+camera_auto_detect=1
+
+# Display: official DSI screens auto-detect too. For other screens, use the vendor's overlay, e.g.
+# dtoverlay=vc4-kms-dsi-7inch
+display_auto_detect=1
+
+# I2S amp (MAX98357A) on GPIO 18/19/21, and turn off the headphone/HDMI audio default
+dtparam=audio=off
+dtoverlay=max98357a
+
+# Pi 5 on a battery board that can supply 5 A: stop the low-current USB limit
+usb_max_current_enable=1

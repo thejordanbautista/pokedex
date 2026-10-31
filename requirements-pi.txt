@@ -1,0 +1,5 @@
+# Use with a venv created with --system-site-packages so apt's picamera2 and pygame are visible.
+numpy>=1.24
+pillow>=10.0
+ai-edge-litert>=1.0
+gpiozero>=2.0

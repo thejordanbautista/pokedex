@@ -1,0 +1,23 @@
+# Start the Pokédex on boot, full screen, without a desktop.
+#
+#   sudo cp deploy/pokedex.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now pokedex
+#
+# Edit User and the paths if your username or clone location differ.
+# The "B held = shutdown" feature needs passwordless shutdown for this user; see docs/setup-pi.md.
+
+[Unit]
+Description=Real-life Pokédex
+After=multi-user.target sound.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/pokedex
+Environment=SDL_VIDEODRIVER=kmsdrm
+Environment=SDL_AUDIODRIVER=alsa
+ExecStart=/home/pi/pokedex/.venv/bin/python -m pokedex --fullscreen --gpio
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

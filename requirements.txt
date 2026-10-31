@@ -1,0 +1,6 @@
+pygame>=2.5
+numpy>=1.24
+pillow>=10.0
+opencv-python-headless>=4.8
+ai-edge-litert>=1.0; platform_machine != "armv7l"
+pytest>=8.0

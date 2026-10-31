@@ -1,0 +1,97 @@
+{
+  "_comment": "World-mode entries. 'labels' are the classifier labels that map to each entry (ImageNet names work with a stock MobileNet). Add your own!",
+  "entries": [
+    {
+      "number": 1,
+      "name": "Dog",
+      "category": "Loyal Companion Creature",
+      "types": ["normal"],
+      "height_m": 0.6,
+      "weight_kg": 25,
+      "description": "Forms deep bonds with its trainer. Its tail-wagging speed rises sharply whenever the word walk is spoken nearby.",
+      "evolutions": ["Puppy", "Dog", "Old Good Boy"],
+      "labels": ["golden retriever", "labrador retriever", "pug", "beagle", "german shepherd", "border collie", "chihuahua", "pembroke", "siberian husky", "dog"]
+    },
+    {
+      "number": 2,
+      "name": "Cat",
+      "category": "Aloof Napping Creature",
+      "types": ["normal", "dark"],
+      "height_m": 0.25,
+      "weight_kg": 4.5,
+      "description": "Spends most of the day asleep in sunbeams. Knocks objects off tables to test the trainer's reflexes.",
+      "evolutions": ["Kitten", "Cat"],
+      "labels": ["tabby", "tiger cat", "egyptian cat", "persian cat", "siamese cat", "cat"]
+    },
+    {
+      "number": 3,
+      "name": "Squirrel",
+      "category": "Acorn Hoarder Creature",
+      "types": ["normal", "grass"],
+      "height_m": 0.2,
+      "weight_kg": 0.5,
+      "description": "Buries thousands of nuts each autumn and forgets most of them, accidentally planting entire forests.",
+      "labels": ["fox squirrel", "squirrel"]
+    },
+    {
+      "number": 4,
+      "name": "Songbird",
+      "category": "Dawn Chorus Creature",
+      "types": ["normal", "flying"],
+      "height_m": 0.15,
+      "weight_kg": 0.03,
+      "description": "Sings at sunrise to claim its territory. Some can tell trainers apart by the sound of their footsteps.",
+      "labels": ["robin", "goldfinch", "house finch", "jay", "chickadee", "junco"]
+    },
+    {
+      "number": 5,
+      "name": "Banana",
+      "category": "Potassium Fruit Object",
+      "types": ["grass"],
+      "height_m": 0.2,
+      "weight_kg": 0.12,
+      "description": "Ripens faster when stored next to its friends. Its peel is a legendary trap in kart racing.",
+      "labels": ["banana"]
+    },
+    {
+      "number": 6,
+      "name": "Coffee Mug",
+      "category": "Morning Fuel Object",
+      "types": ["fire"],
+      "height_m": 0.1,
+      "weight_kg": 0.35,
+      "description": "Restores the trainer's energy each morning. Usually found half full and cold on a desk.",
+      "labels": ["coffee mug", "cup"]
+    },
+    {
+      "number": 7,
+      "name": "Laptop",
+      "category": "Glowing Thinking Object",
+      "types": ["electric", "steel"],
+      "height_m": 0.02,
+      "weight_kg": 1.5,
+      "description": "Holds the code that makes this Pokédex work. Gets very warm when asked to train a neural network.",
+      "labels": ["laptop", "notebook"]
+    },
+    {
+      "number": 8,
+      "name": "Smartphone",
+      "category": "Pocket Signal Object",
+      "types": ["electric"],
+      "height_m": 0.15,
+      "weight_kg": 0.2,
+      "description": "Its battery drains fastest exactly when the trainer needs it most.",
+      "labels": ["cellular telephone", "iPod"]
+    },
+    {
+      "number": 9,
+      "name": "Pizza",
+      "category": "Shared Feast Object",
+      "types": ["fire", "normal"],
+      "height_m": 0.03,
+      "weight_kg": 1.0,
+      "description": "Appears at the end of every long build session. Restores full HP to the whole team.",
+      "labels": ["pizza"]
+    }
+  ]
+}

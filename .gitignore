@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Large or third-party-owned files: generated locally, never committed
+models/*.tflite
+models/*_labels.txt
+assets/sprites/
+assets/cries/
+data/pokemon.json
+data/seen.json
+training/
+*.keras

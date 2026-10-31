@@ -1,0 +1,37 @@
+# Pokédex settings. Command-line flags override these.
+
+[display]
+width = 800          # 800x480 for most 4-5 in DSI screens; 480x320 for 3.5 in SPI
+height = 480
+fullscreen = false
+
+[camera]
+source = "auto"      # auto | picamera2 | opencv | folder
+index = 0            # webcam index for opencv
+sample_dir = "samples"
+
+[recognition]
+mode = "pokemon"     # starting mode: pokemon | world
+threshold = 0.6      # below this confidence, show "Unknown"
+pokemon_model = "models/pokemon.tflite"
+pokemon_labels = "models/pokemon_labels.txt"
+world_model = "models/world.tflite"
+world_labels = "models/world_labels.txt"
+
+[audio]
+tts = "auto"         # auto | piper | espeak | none
+piper_voice = ""     # path to a Piper .onnx voice, if using piper
+volume = 0.8
+
+[gpio]
+enabled = false
+# BCM pin numbers; buttons connect pin -> GND
+up = 5
+down = 6
+left = 13
+right = 26
+a = 16
+b = 17
+scan = 27
+leds = 22
+shutdown_hold_seconds = 3.0
