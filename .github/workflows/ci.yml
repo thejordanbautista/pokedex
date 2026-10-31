@@ -17,6 +17,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install pygame numpy pillow pytest "tomli; python_version < '3.11'"
+      - run: pip install pygame numpy pillow pytest pyflakes "tomli; python_version < '3.11'"
+      - run: python -m pyflakes pokedex scripts tests  # undefined names, unused imports
       - run: pytest -q
       - run: python -m pokedex --camera folder --no-tts --frames 30

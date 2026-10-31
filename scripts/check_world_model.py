@@ -20,8 +20,7 @@ import numpy as np  # noqa: E402
 from PIL import Image  # noqa: E402
 
 from pokedex import classifier, config  # noqa: E402
-
-
+from pokedex.dex import Dex  # noqa: E402
 
 IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
 
