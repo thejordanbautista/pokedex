@@ -5,6 +5,10 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 3.9 = macOS's built-in python3; 3.11 = Raspberry Pi OS (Bookworm); 3.13 = current
+        python-version: ["3.9", "3.11", "3.13"]
     env:
       SDL_VIDEODRIVER: dummy
       SDL_AUDIODRIVER: dummy
@@ -12,7 +16,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
-      - run: pip install pygame numpy pillow pytest
+          python-version: ${{ matrix.python-version }}
+      - run: pip install pygame numpy pillow pytest "tomli; python_version < '3.11'"
       - run: pytest -q
       - run: python -m pokedex --camera folder --no-tts --frames 30

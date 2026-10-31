@@ -12,8 +12,9 @@ build the software before the hardware arrives.
 ## Quick start (laptop)
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+python scripts/fetch_pokeapi.py   # Gen 1 stats, sprites, cries (~2 min)
 python -m pokedex                 # webcam if found, else images in samples/
 python -m pokedex --camera folder # cycle through samples/ instead of a webcam
 ```
@@ -43,7 +44,8 @@ Auto-start on boot: see [`deploy/`](deploy/). Wiring and pins: [`docs/wiring.md`
 
 ## Models
 
-Drop TensorFlow Lite models into `models/`:
+Drop TensorFlow Lite models into `models/`, and install the runtime once you have one:
+`pip install ai-edge-litert`.
 
 | File | What |
 | --- | --- |
