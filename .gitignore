@@ -13,3 +13,5 @@ data/pokemon.json
 data/seen.json
 training/
 *.keras
+photos/
+test-photos/

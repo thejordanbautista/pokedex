@@ -50,9 +50,22 @@ Drop TensorFlow Lite models into `models/`:
 | `pokemon.tflite` + `pokemon_labels.txt` | Pokémon classifier |
 | `world.tflite` + `world_labels.txt` | Real-world classifier (e.g. ImageNet MobileNet) |
 
-Train your own from a folder of labelled photos with
-[`scripts/train_classifier.py`](scripts/train_classifier.py) (run it on a laptop or Colab, not the Pi).
-Photos taken with the device's own camera matter more than model size.
+Photos taken with the device's own camera matter more than model size. The training loop:
+
+```bash
+# 1. On the Pokédex: capture photos per class (Space = burst of 10, Q = done)
+python -m pokedex.capture Pikachu
+python -m pokedex.capture background --auto 100   # random scenes = "nothing here"
+
+# 2. On a laptop or Colab (not the Pi): train and export int8 TFLite
+python scripts/train_classifier.py photos/ --out models/pokemon
+
+# 3. Back on the Pi: check accuracy, scan time and a suggested threshold
+#    (use a fresh set of photos the model hasn't seen)
+python -m pokedex.evaluate test-photos/ --mode pokemon
+```
+
+Phase 3 is done when accuracy is at least 85% and the median scan time is under 1 s on the Pi.
 
 ## Layout
 
