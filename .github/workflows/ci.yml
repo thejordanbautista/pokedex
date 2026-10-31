@@ -2,6 +2,9 @@ name: tests
 
 on: [push, pull_request]
 
+permissions:
+  contents: write  # only used to push the screenshots branch
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -23,8 +26,11 @@ jobs:
       - run: python -m pokedex --camera folder --no-tts --frames 30
       - run: python scripts/screenshots.py
         if: matrix.python-version == '3.13'
-      - uses: actions/upload-artifact@v4
-        if: matrix.python-version == '3.13'
-        with:
-          name: screenshots
-          path: screenshots/
+      - name: Publish screenshots to the screenshots branch
+        if: matrix.python-version == '3.13' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          cd screenshots
+          git init -q -b screenshots
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Screenshots for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" screenshots
