@@ -39,14 +39,19 @@ def center_crop_resize(frame: np.ndarray, size: tuple[int, int]) -> np.ndarray:
 
 
 def to_probabilities(raw: np.ndarray, scale: float = 0.0, zero_point: int = 0) -> np.ndarray:
-    """Dequantize model output if needed, and apply softmax if it isn't already probabilities."""
+    """Dequantize model output if needed, and apply softmax only if it isn't already probabilities.
+
+    Quantized softmax outputs only roughly sum to 1 (each of ~1000 values is rounded to a
+    multiple of 1/256), so "already probabilities" means: all in [0, 1] with a sum near 1.
+    Those are renormalized, never softmaxed again: a second softmax flattens everything to ~1/N."""
     out = raw.astype(np.float32).reshape(-1)
     if scale:
         out = (out - zero_point) * scale
-    if out.min() < 0 or out.max() > 1.0001 or not np.isclose(out.sum(), 1.0, atol=0.05):
-        e = np.exp(out - out.max())
-        out = e / e.sum()
-    return out
+    total = float(out.sum())
+    if out.min() >= 0 and out.max() <= 1.0001 and 0.5 <= total <= 1.5:
+        return out / total
+    e = np.exp(out - out.max())
+    return e / e.sum()
 
 
 class Classifier:
@@ -113,6 +118,7 @@ class MockClassifier(Classifier):
 
 
 def _interpreter_class():
+    tried = []
     for mod, attr in (
         ("ai_edge_litert.interpreter", "Interpreter"),
         ("tflite_runtime.interpreter", "Interpreter"),
@@ -121,9 +127,12 @@ def _interpreter_class():
         try:
             module = __import__(mod, fromlist=[attr])
             return getattr(module, attr)
-        except ImportError:
-            continue
-    raise ImportError("Install ai-edge-litert (pip install ai-edge-litert) to run .tflite models")
+        except Exception as e:  # ImportError, or a broken install raising something else
+            tried.append(f"{mod.split('.')[0]}: {type(e).__name__}: {e}")
+    raise ImportError("No TFLite runtime could be loaded (pip install ai-edge-litert). Tried: " + " | ".join(tried))
+
+
+LOAD_ERRORS: dict[str, str] = {}  # model path -> why it failed to load, for diagnostics
 
 
 def create(model_path: Path, labels_path: Path, fallback_labels: list[str]) -> Classifier:
@@ -131,6 +140,7 @@ def create(model_path: Path, labels_path: Path, fallback_labels: list[str]) -> C
         try:
             return TFLiteClassifier(Path(model_path), Path(labels_path))
         except Exception as e:
+            LOAD_ERRORS[str(model_path)] = f"{type(e).__name__}: {e}"
             log.warning("Could not load %s (%s: %s); using mock classifier", model_path, type(e).__name__, e)
     else:
         log.info("No model at %s; using mock classifier", model_path)

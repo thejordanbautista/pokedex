@@ -53,7 +53,11 @@ def run() -> None:
     cfg = config.load()
     model = classifier.create(cfg.world_model, cfg.world_labels, [])
     if not model.available:
-        report("error", "No world model loaded (see the warning above for why)")
+        import platform
+
+        why = classifier.LOAD_ERRORS.get(str(cfg.world_model), "model or labels file missing")
+        report("error", f"No world model loaded on {platform.system()} {platform.machine()} "
+               f"Python {platform.python_version()}: {why}")
         sys.exit(1)
     report("notice", f"Model input {model.w}x{model.h} {model.inp['dtype'].__name__} q={model.inp.get('quantization')}, "
            f"output q={model.out.get('quantization')}, {len(model.labels)} labels, first={model.labels[:2]}")

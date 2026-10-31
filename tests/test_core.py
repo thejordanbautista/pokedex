@@ -28,6 +28,17 @@ def test_to_probabilities_softmax_and_dequant():
     assert np.isclose(q.sum(), 1, atol=0.05) and q.argmax() == 0
 
 
+def test_quantized_probabilities_not_softmaxed_twice():
+    # Real MobileNet uint8 output: 1001 classes, scale 1/256. Rounding makes the sum ~1.07,
+    # which used to trigger a second softmax and flatten every score to ~0.001.
+    raw = np.zeros(1001, np.uint8)
+    raw[209], raw[210], raw[300] = 180, 60, 34
+    raw[400:430] = 1
+    p = classifier.to_probabilities(raw, scale=1 / 256, zero_point=0)
+    assert p.argmax() == 209 and p[209] > 0.6
+    assert np.isclose(p.sum(), 1.0)
+
+
 def test_center_crop_resize_shape():
     img = np.zeros((480, 640, 3), dtype=np.uint8)
     assert classifier.center_crop_resize(img, (224, 224)).shape == (224, 224, 3)
