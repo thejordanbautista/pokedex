@@ -23,8 +23,15 @@ Without a model in `models/`, a mock classifier cycles through the dex so you ca
 To make **World mode** recognize real animals and objects right away:
 
 ```bash
-python scripts/fetch_world_model.py && pip install ai-edge-litert
+python scripts/fetch_world_model.py
 python -m pokedex --mode world      # point it at a mug, a banana, a dog...
+```
+
+It runs with OpenCV, which is already installed. `pip install ai-edge-litert` makes it faster where it
+works (not on macOS with Python 3.9). On the Pi, use the smaller model:
+
+```bash
+python scripts/fetch_world_model.py --quantized && pip install ai-edge-litert
 ```
 
 **Webcam not showing?** Run `python -m pokedex.camera`. It tests each camera slot, saves a snapshot

@@ -123,13 +123,15 @@ class OpenCVTFLiteClassifier(Classifier):
         self.w = self.h = size
         self.labels = load_labels(labels_path)
         # Same field names as TFLiteClassifier so diagnostics can print them
-        self.inp = {"dtype": np.uint8, "quantization": "handled by OpenCV"}
+        self.inp = {"dtype": np.float32, "quantization": "none (float model)"}
         self.out = {"quantization": "handled by OpenCV"}
         log.info("Loaded %s with OpenCV DNN %s", model_path.name, cv2.__version__)
 
     def predict(self, frame: np.ndarray, top_k: int = 3) -> Prediction:
         img = center_crop_resize(frame, (self.w, self.h))
-        blob = self.cv2.dnn.blobFromImage(img, scalefactor=1.0, size=(self.w, self.h), swapRB=False)
+        # Float MobileNet-style models expect pixels scaled to [-1, 1]
+        blob = self.cv2.dnn.blobFromImage(img, scalefactor=1 / 127.5, size=(self.w, self.h),
+                                          mean=(127.5, 127.5, 127.5), swapRB=False)
         self.net.setInput(blob)
         raw = np.asarray(self.net.forward())
         probs = to_probabilities(raw)
