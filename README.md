@@ -27,8 +27,9 @@ python scripts/fetch_world_model.py
 python -m pokedex --mode world      # point it at a mug, a banana, a dog...
 ```
 
-It runs with OpenCV, which is already installed. `pip install ai-edge-litert` makes it faster where it
-works (not on macOS with Python 3.9). On the Pi, use the smaller model:
+Models run with `ai-edge-litert` (installed by requirements.txt). On a Mac use Python 3.10 or newer
+(e.g. `brew install python@3.13`): its macOS build for the system Python 3.9 is broken. On the Pi,
+use the smaller model:
 
 ```bash
 python scripts/fetch_world_model.py --quantized && pip install ai-edge-litert

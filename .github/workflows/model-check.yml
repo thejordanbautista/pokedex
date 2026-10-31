@@ -1,7 +1,7 @@
 name: world model
 
 # Downloads the real MobileNet model and scans a real photo, on the same setups people run:
-# macOS with its built-in Python 3.9, and Linux with Raspberry Pi OS's Python 3.11.
+# macOS with Homebrew Python, and Linux with Raspberry Pi OS's Python 3.11.
 on:
   workflow_dispatch:
   push:
@@ -13,10 +13,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: macos-latest, python: "3.9"}    # macOS built-in python3: LiteRT is broken here -> OpenCV fallback
+          - {os: macos-latest, python: "3.13"}   # Homebrew python3 (the project owner's Mac)
           - {os: macos-latest, python: "3.12"}
           - {os: ubuntu-latest, python: "3.11"}  # Raspberry Pi OS Bookworm
-          - {os: ubuntu-latest, python: "3.11", extra: "--force-opencv"}
           - {os: ubuntu-latest, python: "3.11", fetch: "--quantized"}  # the Pi's smaller model
     runs-on: ${{ matrix.os }}
     steps:
@@ -24,7 +23,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
-      - run: pip install -r requirements.txt ai-edge-litert
+      - run: pip install -r requirements.txt
       - run: python scripts/fetch_world_model.py ${{ matrix.fetch }}
       - run: curl -sSfL -o dog.jpg https://storage.googleapis.com/download.tensorflow.org/example_images/YellowLabradorLooking_new.jpg
-      - run: python scripts/check_world_model.py dog.jpg --expect Dog ${{ matrix.extra }}
+      - run: python scripts/check_world_model.py dog.jpg --expect Dog

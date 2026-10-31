@@ -21,10 +21,6 @@ from PIL import Image  # noqa: E402
 
 from pokedex import classifier, config  # noqa: E402
 
-if "--force-opencv" in sys.argv:  # test the OpenCV fallback even where LiteRT works
-    sys.argv.remove("--force-opencv")
-    classifier.TFLiteClassifier.__init__ = lambda *a, **k: (_ for _ in ()).throw(ImportError("forced off"))
-from pokedex.dex import Dex  # noqa: E402
 
 
 IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
