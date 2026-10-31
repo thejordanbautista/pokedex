@@ -15,3 +15,4 @@ training/
 *.keras
 photos/
 test-photos/
+camera-test/

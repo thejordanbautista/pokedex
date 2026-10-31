@@ -119,9 +119,10 @@ class UI:
         y = self._text("Ready to scan", self.f_big, INK, x, y) + int(10 * self.u)
         for line in wrap("Point the lens at a Pokémon or a creature and press SCAN.", self.f_small, self.panel.w - 2 * self.pad):
             y = self._text(line, self.f_small, MUTED, x, y)
-        if note:
-            self._text(note, self.f_small, MUTED, x, y + int(10 * self.u))
-        self._hint("SCAN  ·  ◀▶ list  ·  M mode")
+        y += int(10 * self.u)
+        for line in wrap(note, self.f_small, self.panel.w - 2 * self.pad)[:6]:
+            y = self._text(line, self.f_small, DARK_RED, x, y)
+        self._hint("SCAN  ·  ◀▶ list  ·  M mode  ·  C camera")
 
     def scanning(self, frame, t: float) -> None:
         self._blit_frame(frame)

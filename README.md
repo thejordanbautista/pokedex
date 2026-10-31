@@ -21,6 +21,11 @@ python -m pokedex --camera folder # cycle through samples/ instead of a webcam
 
 Without a model in `models/`, a mock classifier cycles through the dex so you can work on the UI.
 
+**Webcam not showing?** Run `python -m pokedex.camera`. It tests each camera slot, saves a snapshot
+from each into `camera-test/`, and says why any slot failed. On macOS, allow your terminal in
+System Settings > Privacy & Security > Camera, then quit and reopen the terminal. If slot 0 is your
+iPhone (Continuity Camera), use `python -m pokedex --camera-index 1`, or press **C** in the app.
+
 | Key | Action |
 | --- | --- |
 | Space / Enter | Scan |
@@ -28,6 +33,7 @@ Without a model in `models/`, a mock classifier cycles through the dex so you ca
 | Z | A (select) |
 | X / Esc | B (back) |
 | M | Switch Pokémon / World mode |
+| C | Try the next camera |
 | Q | Quit |
 
 ## On the Raspberry Pi

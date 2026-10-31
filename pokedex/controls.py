@@ -23,6 +23,7 @@ class Action(enum.Enum):
     B = "b"
     SCAN = "scan"
     MODE = "mode"
+    CAMERA = "camera"
     QUIT = "quit"
 
 
@@ -37,6 +38,7 @@ KEYMAP = {
     pygame.K_SPACE: Action.SCAN,
     pygame.K_RETURN: Action.SCAN,
     pygame.K_m: Action.MODE,
+    pygame.K_c: Action.CAMERA,
     pygame.K_q: Action.QUIT,
 }
 

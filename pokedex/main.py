@@ -68,6 +68,7 @@ class App:
         self.page = 0
         self.cursor = 0
         self.still = None  # frame frozen at scan time
+        self.toast, self.toast_until = "", 0.0
 
     @property
     def dex(self) -> Dex:
@@ -121,7 +122,9 @@ class App:
         if action == Action.QUIT:
             return False
         s = self.state
-        if action == Action.MODE and s in ("live", "list"):
+        if action == Action.CAMERA and s == "live":
+            self.switch_camera()
+        elif action == Action.MODE and s in ("live", "list"):
             self.mode = "world" if self.mode == "pokemon" else "pokemon"
             self.cursor = 0
         elif action == Action.SCAN and s in ("live", "unknown", "result"):
@@ -153,12 +156,45 @@ class App:
                     self.state = "result"
         return True
 
+    def switch_camera(self) -> None:
+        """Try the next webcam slot (laptop camera, iPhone, USB), wrapping back to the samples."""
+        current = getattr(self.cam, "index", -1)
+        self.cam.stop()
+        for i in [*range(current + 1, 4), "folder"]:
+            try:
+                if i == "folder":
+                    self.cam = camera.create("folder", sample_dir=self.cfg.sample_dir)
+                else:
+                    self.cam = camera.create("opencv", i)
+                break
+            except Exception as e:
+                log.info("Camera %s unavailable: %s", i, e)
+        self.toast = f"Camera: {self.camera_label()}"
+        self.toast_until = time.monotonic() + 2.5
+
+    def camera_label(self) -> str:
+        if self.cam.name == "opencv":
+            return f"webcam {self.cam.index}"
+        if self.cam.name == "folder":
+            return "sample images"
+        return "Pi camera"
+
+    def camera_note(self) -> str:
+        if time.monotonic() < self.toast_until:
+            return self.toast
+        if self.cam.name == "folder":
+            why = self.cam.problems[0] if self.cam.problems else "chosen in settings"
+            return f"Using sample images (↑↓ to flip). Webcam: {why}"
+        return ""
+
     # ---------- loop ----------
     def draw(self, t: float) -> None:
         self.ui.chrome(self.mode, self.seen.count(self.mode), len(self.dex), t, lights=self.state == "scanning")
         if self.state == "live":
-            note = "" if len(self.dex) else "No dex data yet: run scripts/fetch_pokeapi.py"
-            self.ui.live(self.cam.frame(), note)
+            notes = [self.camera_note()]
+            if not len(self.dex):
+                notes.append("No dex data yet: run scripts/fetch_pokeapi.py")
+            self.ui.live(self.cam.frame(), "  ".join(n for n in notes if n))
         elif self.state == "scanning":
             self.ui.scanning(self.still, t)
         elif self.state == "result":
@@ -196,6 +232,7 @@ def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(description="Real-life Pokédex")
     p.add_argument("--config", type=config.Path, help="path to config.toml")
     p.add_argument("--camera", choices=["auto", "picamera2", "opencv", "folder"])
+    p.add_argument("--camera-index", type=int, help="webcam slot (try 1 if 0 is your iPhone)")
     p.add_argument("--mode", choices=["pokemon", "world"])
     p.add_argument("--fullscreen", action="store_true")
     p.add_argument("--gpio", action="store_true", help="read physical buttons")
@@ -209,6 +246,8 @@ def main(argv: list[str] | None = None) -> None:
     cfg = config.load(args.config)
     if args.camera:
         cfg.camera_source = args.camera
+    if args.camera_index is not None:
+        cfg.camera_index = args.camera_index
     if args.mode:
         cfg.mode = args.mode
     if args.fullscreen:
