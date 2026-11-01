@@ -60,3 +60,21 @@ def test_camera_choice_is_remembered(tmp_path, monkeypatch):
     assert again.cam.index == 1
     again.cam.stop()
     pygame.quit()
+
+
+def test_clicks_map_to_actions(tmp_path):
+    cfg = config.load()
+    cfg.camera_source, cfg.tts, cfg.data_dir = "folder", "none", tmp_path
+    (tmp_path / "world.json").write_text((config.ROOT / "data/world.json").read_text())
+    app = App(cfg, max_frames=1)
+    app.draw(0.0)
+    scan_btn = next(r for r, a in app.ui.hits if a == "scan" and r.w < app.ui.view.w)
+    assert app.click(scan_btn.center) == controls.Action.SCAN
+    assert app.click(app.ui.view.center) == controls.Action.SCAN  # tap the viewfinder
+    app.handle(controls.Action.RIGHT)  # open the dex grid
+    app.draw(0.0)
+    tile2 = next(r for r, a in app.ui.hits if a == "pick:2")
+    assert app.click(tile2.center) is None and app.cursor == 2  # first tap selects
+    assert app.click(tile2.center) == controls.Action.A  # second tap opens
+    app.cam.stop()
+    pygame.quit()

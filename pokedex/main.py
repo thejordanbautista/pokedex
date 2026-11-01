@@ -185,6 +185,24 @@ class App:
                     self.state = "result"
         return True
 
+    def click(self, pos) -> Action | None:
+        """Turn a click or tap into an action. Dex tiles select (first tap) then open (second tap)."""
+        name = self.ui.hit_test(pos)
+        if not name:
+            return None
+        if name.startswith("pick:"):
+            i = int(name.split(":", 1)[1])
+            if i == self.cursor:
+                return Action.A
+            self.cursor = i
+            log.info("Button: pick %d (screen: %s)", i, self.state)
+            return None
+        try:
+            return Action(name)
+        except ValueError:
+            log.warning("Unknown button %r", name)
+            return None
+
     def switch_camera(self) -> None:
         """Try the next webcam slot (laptop camera, iPhone, USB), wrapping back to the samples."""
         current = getattr(self.cam, "index", -1)
@@ -261,8 +279,7 @@ class App:
                 for event in pygame.event.get():
                     action = controls.from_event(event)
                     if action is None and event.type == pygame.MOUSEBUTTONDOWN and getattr(event, "button", 1) == 1:
-                        name = self.ui.hit_test(event.pos)
-                        action = Action(name) if name else None
+                        action = self.click(event.pos)
                     if action and not self.handle(action):
                         running = False
                 if self.job and self.job.done.is_set() and time.monotonic() - self.job.started >= MIN_SCAN_SECONDS:
