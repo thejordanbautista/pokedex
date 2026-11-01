@@ -19,3 +19,5 @@ camera-test/
 pokedex.log
 data/camera.json
 screenshots/
+_site/
+node_modules/

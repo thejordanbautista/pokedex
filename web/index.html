@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#C8102E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Field Dex">
+<title>Field Dex</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="device" aria-label="Field Dex scanner">
+  <header class="top">
+    <div class="lens" aria-hidden="true"><span class="lens-glass"></span></div>
+    <div class="leds" aria-hidden="true"><i></i><i></i><i></i></div>
+    <button class="seen" id="seenBtn" type="button" aria-label="Open the dex">
+      <span class="seen-count" id="seenCount">0</span><span class="seen-of">of <span id="seenTotal">0</span> seen</span>
+    </button>
+  </header>
+
+  <section class="glass" aria-label="Viewfinder">
+    <video id="video" playsinline muted autoplay></video>
+    <canvas id="still" aria-hidden="true"></canvas>
+    <div class="reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="sweep" aria-hidden="true"></div>
+    <div class="glass-msg" id="glassMsg">
+      <p id="glassText">Point the lens at an animal or an object, then scan.</p>
+      <button class="ghost" id="startBtn" type="button">Turn on camera</button>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <nav class="controls" aria-label="Scanner controls">
+    <button class="side" id="modeBtn" type="button" aria-label="Switch dex">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 3.8 5.2 3.8 8.5s-1.2 6.1-3.8 8.5c-2.6-2.4-3.8-5.2-3.8-8.5S9.4 5.9 12 3.5z"/></svg>
+      <span id="modeLabel">World</span>
+    </button>
+    <button class="scan" id="scanBtn" type="button" disabled>
+      <span class="scan-ring" aria-hidden="true"></span>
+      <span class="scan-label" id="scanLabel">Scan</span>
+    </button>
+    <button class="side" id="flipBtn" type="button" aria-label="Switch camera">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9a8 8 0 0 1 14.3-3.2M20 15a8 8 0 0 1-14.3 3.2"/><path d="M18.5 2.5v3.6h-3.6M5.5 21.5v-3.6h3.6"/></svg>
+      <span>Camera</span>
+    </button>
+  </nav>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+
+<section class="sheet" id="entrySheet" role="dialog" aria-modal="true" aria-labelledby="entryName" hidden>
+  <div class="grip" aria-hidden="true"></div>
+  <div class="entry-head">
+    <p class="entry-no" id="entryNo"></p>
+    <p class="entry-new" id="entryNew" hidden>New entry</p>
+  </div>
+  <h1 class="entry-name" id="entryName"></h1>
+  <p class="entry-cat" id="entryCat"></p>
+  <ul class="types" id="entryTypes"></ul>
+  <dl class="stats">
+    <div><dt>Height</dt><dd id="entryHt"></dd></div>
+    <div><dt>Weight</dt><dd id="entryWt"></dd></div>
+    <div><dt>Match</dt><dd id="entryMatch"></dd></div>
+  </dl>
+  <p class="entry-desc" id="entryDesc"></p>
+  <ol class="evo" id="entryEvo" aria-label="Evolution line"></ol>
+  <div class="sheet-actions">
+    <button class="primary" id="againBtn" type="button">Scan again</button>
+    <button class="quiet" id="speakBtn" type="button" aria-pressed="true">Voice on</button>
+  </div>
+</section>
+
+<section class="sheet" id="unknownSheet" role="dialog" aria-modal="true" aria-labelledby="unknownTitle" hidden>
+  <div class="grip" aria-hidden="true"></div>
+  <h1 class="entry-name small" id="unknownTitle">No match yet</h1>
+  <p class="entry-desc" id="unknownText"></p>
+  <div class="sheet-actions">
+    <button class="primary" id="unknownAgainBtn" type="button">Scan again</button>
+  </div>
+</section>
+
+<section class="sheet tall" id="dexSheet" role="dialog" aria-modal="true" aria-labelledby="dexTitle" hidden>
+  <div class="grip" aria-hidden="true"></div>
+  <h1 class="entry-name small" id="dexTitle">World dex</h1>
+  <ol class="dex-grid" id="dexGrid"></ol>
+  <div class="sheet-actions">
+    <button class="primary" id="dexCloseBtn" type="button">Back to scanner</button>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js" defer></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

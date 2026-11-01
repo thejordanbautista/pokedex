@@ -1,0 +1,62 @@
+name: phone app
+
+# Tests the phone app in a real browser with a fake camera and the real model, then publishes
+# it to GitHub Pages. One-time setup: repo Settings > Pages > Source: GitHub Actions.
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "data/world.json", "scripts/build_web.py", "scripts/make_fake_video.py", ".github/workflows/web.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # screenshots-web branch
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: {python-version: "3.13"}
+      - uses: actions/setup-node@v5
+        with: {node-version: "22"}
+      - run: node --test web/test/dex.test.mjs
+      - run: pip install numpy pillow
+      - run: python scripts/build_web.py
+      - run: test -s _site/labels.txt
+      - run: |
+          curl -sSfL -o dog.jpg https://storage.googleapis.com/download.tensorflow.org/example_images/YellowLabradorLooking_new.jpg
+          python scripts/make_fake_video.py dog.jpg dog.y4m
+      - run: |
+          npm install --no-save playwright@1.48.2
+          npx playwright install --with-deps chromium
+      - name: Serve the site and scan a real dog photo with the real model
+        run: |
+          (cd _site && python -m http.server 8000 &) && sleep 1
+          node web/test/e2e.mjs http://localhost:8000/ "$PWD/dog.y4m" Dog --shots shots
+      - name: Publish screenshots to the screenshots-web branch
+        if: always()
+        run: |
+          [ -d shots ] || exit 0
+          cd shots && git init -q -b screenshots-web
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Phone app screenshots for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" screenshots-web
+      - uses: actions/upload-pages-artifact@v3
+        with: {path: _site}
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

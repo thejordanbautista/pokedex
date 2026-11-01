@@ -9,6 +9,14 @@ entry and reads it aloud. Two recognition modes:
 The same code runs on a laptop (webcam or a folder of test images, keyboard controls), so you can
 build the software before the hardware arrives.
 
+## On your phone
+
+**Field Dex**, the phone version, runs in Safari or Chrome with no install:
+<https://thejordanbautista.github.io/pokedex/>. Point the rear camera at an animal or an object and
+tap Scan. Recognition runs on the phone itself. Add it to your home screen (Share > Add to Home
+Screen) and it opens like an app. The code is in [`web/`](web/) and uses the same dex data as the
+handheld (`data/world.json`).
+
 ## Quick start (laptop)
 
 ```bash
