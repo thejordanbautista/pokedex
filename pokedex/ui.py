@@ -137,7 +137,14 @@ class UI:
 
     def _para(self, text: str, font, color, x: int, y: int, width: int, max_lines: int = 8, leading: float = 1.3) -> int:
         step = int(font.get_height() * leading)
-        for line in wrap(text, font, width)[:max_lines]:
+        lines = wrap(text, font, width)
+        if len(lines) > max_lines:  # show that text was cut, never stop mid-sentence silently
+            lines = lines[:max_lines]
+            last = lines[-1]
+            while last and font.size(last + "…")[0] > width:
+                last = last.rsplit(" ", 1)[0] if " " in last else last[:-1]
+            lines[-1] = last.rstrip(",.;:") + "…"
+        for line in lines:
             self.s.blit(font.render(line, True, color), (x, y))
             y += step
         return y
@@ -215,7 +222,7 @@ class UI:
     def _controls(self, t: float = 0.0) -> None:
         """World / Scan / Camera under the viewfinder. The scan button is the one loud thing."""
         s, u = self.s, self.u
-        cx, cy = self.controls.centerx, self.controls.centery + int(4 * u)
+        cx, cy = self.controls.centerx, self.controls.centery - int(2 * u)
         R = int(46 * u)
         _circle(s, SHELL_DEEP, (cx, cy + 5 * u), R)
         _circle(s, GLASS, (cx, cy), R)
@@ -370,7 +377,7 @@ class UI:
             self.s.blit(self.display_m.render(v, True, INK), (cx, y + int(24 * u)))
         y += row_h + int(10 * u)
 
-        lines_room = max(1, (c.bottom - int(60 * u) - y) // int(self.text.get_height() * 1.3))
+        lines_room = max(1, (c.bottom - int(56 * u) - y) // int(self.text.get_height() * 1.3))
         if page == 1 and e.evolutions:
             y = self._text("Evolution line", self.text_b, INK, x, y) + int(6 * u)
             self._evolutions(e, x, y, c.w)
@@ -378,7 +385,7 @@ class UI:
             self._para(e.description, self.text, INK, x, y, c.w, max_lines=lines_room)
         actions = [("Scan again", "scan")]
         if e.evolutions and len(e.evolutions) > 1:
-            actions.append(("Description" if page == 1 else "Evolutions", "right"))
+            actions.append(("Details" if page == 1 else "Evolves", "right"))
         actions.append(("Back", "b"))
         self.buttons(actions)
 
