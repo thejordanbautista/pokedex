@@ -184,7 +184,7 @@ body.scanning .scan-ring { animation: ring 1s linear infinite; border-style: das
   margin: 2px 0 0;
   font-family: var(--display); font-weight: 800;
   font-size: clamp(38px, 13vw, 56px); line-height: 1; letter-spacing: -.02em;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal; word-break: keep-all; /* JS shrinks long names to fit instead of splitting them */
 }
 .entry-name.small { font-size: 30px; margin-bottom: 10px; }
 .entry-cat { margin: 8px 0 0; color: var(--ink-soft); }
@@ -233,9 +233,10 @@ body.mode-pokemon .ico-world { display: none; }
 .ico-poke path { fill: currentColor; stroke: none; }
 .sheet { position: fixed; }
 .entry-art {
-  float: right; width: 112px; height: 112px; object-fit: contain; margin: -4px -6px 4px 8px;
+  position: absolute; top: 26px; right: 16px; width: 104px; height: 104px; object-fit: contain;
   filter: drop-shadow(0 6px 10px rgba(22,32,44,.18));
 }
+.sheet.has-art .entry-head, .sheet.has-art .entry-name, .sheet.has-art .entry-cat { margin-right: 108px; }
 .entry-manage { display: flex; justify-content: space-between; margin-top: 14px; }
 .link { background: none; border: 0; padding: 8px 0; font-weight: 700; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .link.danger { color: var(--shell-deep); }

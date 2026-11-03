@@ -392,10 +392,12 @@ function showEntry(e, confidence, isNew) {
   const pokemon = state.mode === "pokemon";
   $("entrySheet").dataset.key = pokemon ? e.key || "" : "";
   $("entryArt").hidden = !e.image;
+  $("entrySheet").classList.toggle("has-art", !!e.image);
   if (e.image) $("entryArt").src = e.image;
   $("entryNo").textContent = `No. ${String(e.number).padStart(pokemon ? 4 : 3, "0")}`;
   $("entryNew").hidden = !isNew;
   $("entryName").textContent = e.name;
+  fitName($("entryName"));
   $("entryCat").textContent = e.category || "";
   $("entryTypes").replaceChildren(...(e.types || []).map((t) => {
     const li = document.createElement("li");
@@ -418,6 +420,18 @@ function showEntry(e, confidence, isNew) {
   $("entryManage").hidden = !pokemon || confidence != null; // manage from the dex, not mid-scan
   openSheet("entrySheet");
   if (confidence != null) speak(`${e.name}. ${e.category ? e.category + "." : ""} ${e.description || ""}`);
+}
+
+// Shrink a long name until every word fits its line, instead of splitting a word.
+function fitName(el) {
+  el.style.fontSize = "";
+  requestAnimationFrame(() => {
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    while (size > 24 && el.scrollWidth > el.clientWidth + 1) {
+      size -= 2;
+      el.style.fontSize = size + "px";
+    }
+  });
 }
 
 function showUnknown(message) {
