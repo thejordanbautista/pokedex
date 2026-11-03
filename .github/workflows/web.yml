@@ -26,7 +26,7 @@ jobs:
         with: {python-version: "3.13"}
       - uses: actions/setup-node@v5
         with: {node-version: "22"}
-      - run: node --test web/test/dex.test.mjs
+      - run: node --test web/test/dex.test.mjs web/test/knn.test.mjs
       - run: pip install numpy pillow
       - run: python scripts/build_web.py
       - run: test -s _site/labels.txt
@@ -40,6 +40,8 @@ jobs:
         run: |
           (cd _site && python -m http.server 8000 &) && sleep 1
           node web/test/e2e.mjs http://localhost:8000/ "$PWD/dog.y4m" Dog --shots shots
+      - name: Teach a Pokémon (real PokéAPI + real embeddings), scan it, check it persists
+        run: node web/test/teach.e2e.mjs http://localhost:8000/ "$PWD/dog.y4m" --shots shots
       - name: Publish screenshots to the screenshots-web branch
         if: always()
         run: |

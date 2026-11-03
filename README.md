@@ -13,7 +13,12 @@ build the software before the hardware arrives.
 
 **Field Dex**, the phone version, runs in Safari or Chrome with no install:
 <https://thejordanbautista.github.io/pokedex/>. Point the rear camera at an animal or an object and
-tap Scan. Recognition runs on the phone itself. Add it to your home screen (Share > Add to Home
+tap Scan. Recognition runs on the phone itself.
+
+**Pokémon mode** learns your own figures, plushies and cards: tap the counter, *Teach a Pokémon*,
+pick it by name, and hold it in the frame for 20 photos. Teach the background once too (the room
+with no Pokémon in view) so empty scans don't match. Everything taught stays on the phone; the
+entry text and artwork are looked up from [PokéAPI](https://pokeapi.co) by the phone. Add it to your home screen (Share > Add to Home
 Screen) and it opens like an app. The code is in [`web/`](web/) and uses the same dex data as the
 handheld (`data/world.json`).
 

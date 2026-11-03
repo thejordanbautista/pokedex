@@ -38,7 +38,8 @@
 
   <nav class="controls" aria-label="Scanner controls">
     <button class="side" id="modeBtn" type="button" aria-label="Switch dex">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 3.8 5.2 3.8 8.5s-1.2 6.1-3.8 8.5c-2.6-2.4-3.8-5.2-3.8-8.5S9.4 5.9 12 3.5z"/></svg>
+      <svg class="ico-world" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 3.8 5.2 3.8 8.5s-1.2 6.1-3.8 8.5c-2.6-2.4-3.8-5.2-3.8-8.5S9.4 5.9 12 3.5z"/></svg>
+      <svg class="ico-poke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2-2.2 7.3-2.2-7.3-7.3-2.2 7.3-2.2z"/></svg>
       <span id="modeLabel">World</span>
     </button>
     <button class="scan" id="scanBtn" type="button" disabled>
@@ -56,6 +57,7 @@
 
 <section class="sheet" id="entrySheet" role="dialog" aria-modal="true" aria-labelledby="entryName" hidden>
   <div class="grip" aria-hidden="true"></div>
+  <img class="entry-art" id="entryArt" alt="" hidden>
   <div class="entry-head">
     <p class="entry-no" id="entryNo"></p>
     <p class="entry-new" id="entryNew" hidden>New entry</p>
@@ -74,6 +76,10 @@
     <button class="primary" id="againBtn" type="button">Scan again</button>
     <button class="quiet" id="speakBtn" type="button" aria-pressed="true">Voice on</button>
   </div>
+  <div class="entry-manage" id="entryManage" hidden>
+    <button class="link" id="teachMoreBtn" type="button">Add more photos</button>
+    <button class="link danger" id="forgetBtn" type="button">Forget this Pokémon</button>
+  </div>
 </section>
 
 <section class="sheet" id="unknownSheet" role="dialog" aria-modal="true" aria-labelledby="unknownTitle" hidden>
@@ -82,15 +88,51 @@
   <p class="entry-desc" id="unknownText"></p>
   <div class="sheet-actions">
     <button class="primary" id="unknownAgainBtn" type="button">Scan again</button>
+    <button class="quiet" id="unknownTeachBtn" type="button" hidden>Teach it</button>
+  </div>
+</section>
+
+<section class="sheet" id="teachSheet" role="dialog" aria-modal="true" aria-labelledby="teachTitle" hidden>
+  <div class="grip" aria-hidden="true"></div>
+  <h1 class="entry-name small" id="teachTitle">Teach a Pokémon</h1>
+  <p class="entry-desc">Pick the Pokémon, then hold it in the frame for 20 photos.</p>
+  <form class="teach-find" id="teachForm" autocomplete="off">
+    <label for="teachInput">Name or number</label>
+    <div class="teach-row">
+      <input id="teachInput" list="speciesList" placeholder="Bulbasaur" enterkeyhint="search" autocapitalize="words" required>
+      <button class="quiet" type="submit">Find</button>
+    </div>
+    <datalist id="speciesList"></datalist>
+  </form>
+  <p class="teach-msg" id="teachMsg" role="status"></p>
+  <div class="teach-pick" id="teachPick" hidden>
+    <img id="teachArt" alt="">
+    <div><p class="entry-no" id="teachNo"></p><p class="teach-name" id="teachName"></p></div>
+  </div>
+  <div class="sheet-actions">
+    <button class="primary" id="teachGoBtn" type="button" disabled>Take 20 photos</button>
+  </div>
+  <button class="link" id="teachBgBtn" type="button">Teach the background instead</button>
+</section>
+
+<section class="sheet" id="learnedSheet" role="dialog" aria-modal="true" aria-labelledby="learnedTitle" hidden>
+  <div class="grip" aria-hidden="true"></div>
+  <h1 class="entry-name small" id="learnedTitle"></h1>
+  <p class="entry-desc" id="learnedText"></p>
+  <div class="sheet-actions">
+    <button class="primary" id="learnedNextBtn" type="button"></button>
+    <button class="quiet" id="learnedDoneBtn" type="button">Done</button>
   </div>
 </section>
 
 <section class="sheet tall" id="dexSheet" role="dialog" aria-modal="true" aria-labelledby="dexTitle" hidden>
   <div class="grip" aria-hidden="true"></div>
   <h1 class="entry-name small" id="dexTitle">World dex</h1>
+  <p class="entry-desc" id="dexNote" hidden></p>
   <ol class="dex-grid" id="dexGrid"></ol>
   <div class="sheet-actions">
     <button class="primary" id="dexCloseBtn" type="button">Back to scanner</button>
+    <button class="quiet" id="dexTeachBtn" type="button" hidden>Teach a Pokémon</button>
   </div>
 </section>
 

@@ -225,3 +225,39 @@ body.scanning .scan-ring { animation: ring 1s linear infinite; border-style: das
   .sheet, .glass.scanning .sweep, body.scanning .scan-ring { animation: none; }
   .glass.scanning .sweep { top: 40%; }
 }
+
+/* ---------- Pokémon mode: mode icon, artwork, teaching ---------- */
+.ico-poke { display: none; }
+body.mode-pokemon .ico-poke { display: block; }
+body.mode-pokemon .ico-world { display: none; }
+.ico-poke path { fill: currentColor; stroke: none; }
+.sheet { position: fixed; }
+.entry-art {
+  float: right; width: 112px; height: 112px; object-fit: contain; margin: -4px -6px 4px 8px;
+  filter: drop-shadow(0 6px 10px rgba(22,32,44,.18));
+}
+.entry-manage { display: flex; justify-content: space-between; margin-top: 14px; }
+.link { background: none; border: 0; padding: 8px 0; font-weight: 700; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.link.danger { color: var(--shell-deep); }
+.teach-find { margin-top: 16px; }
+.teach-find label { display: block; font-size: 14px; color: var(--ink-soft); margin-bottom: 6px; }
+.teach-row { display: flex; gap: 10px; }
+.teach-row input {
+  flex: 1; min-width: 0; font: inherit; font-size: 18px; padding: 12px 14px;
+  border: 2px solid #c9cfc9; border-radius: 14px; background: #fff; color: var(--ink);
+}
+.teach-row input:focus { outline: none; border-color: var(--ink); }
+.teach-msg { margin: 10px 0 0; min-height: 1.4em; color: var(--ink-soft); }
+.teach-msg:empty { min-height: 0; }
+.teach-pick { display: flex; align-items: center; gap: 14px; margin-top: 12px; padding: 10px; background: #fff; border-radius: 18px; box-shadow: inset 0 0 0 2px #dfe4de; }
+.teach-pick img { width: 72px; height: 72px; object-fit: contain; }
+.teach-pick img[src=""], .teach-pick img:not([src]) { visibility: hidden; }
+.teach-name { margin: 0; font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1.1; }
+#teachBgBtn { display: block; margin: 12px auto 0; }
+.dex-grid img { width: 56px; height: 56px; object-fit: contain; }
+.glass .count {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  font-family: var(--display); font-weight: 800; font-size: 64px; color: #fff;
+  text-shadow: 0 2px 12px rgba(0,0,0,.5); pointer-events: none;
+}
+.glass.capturing { box-shadow: 0 3px 0 var(--shell-deep), 0 0 0 4px var(--amber); }
