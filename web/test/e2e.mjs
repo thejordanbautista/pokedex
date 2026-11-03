@@ -52,6 +52,14 @@ try {
   const detail = id === "entrySheet" ? await page.textContent("#entryMatch") : await page.textContent("#unknownText");
   console.log(`RESULT: ${name} (${detail})`);
   if (name !== expect) failed = `expected ${expect}, got ${name}`;
+  if (id === "unknownSheet") {
+    // World miss offers the way into Pokémon mode
+    await page.click("#unknownPokeBtn");
+    await page.waitForSelector("#teachSheet:not([hidden])", { timeout: 5000 });
+    const label = await page.textContent("#modeLabel");
+    if (label !== "Pokémon") failed = failed || `mode label ${label} after "Is it a Pokémon?"`;
+    console.log("World miss -> Pokémon mode teach screen: OK");
+  }
 
   if (id === "entrySheet") {
     await page.click("#againBtn"); // second scan of the same subject: not new any more

@@ -68,14 +68,21 @@ function updateSeen() {
   let names = [];
   if (state.mode === "world") names = state.dex ? state.dex.entries.map((e) => e.name) : [];
   else names = state.learner.labels().map((k) => state.entries[k]?.name || k);
-  $("seenCount").textContent = names.filter((n) => state.seen[seenKey(state.mode, n)] || state.seen[n]).length;
-  $("seenTotal").textContent = names.length;
+  if (state.mode === "pokemon") {
+    // Pokémon mode counts what this phone has been taught
+    $("seenCount").textContent = names.length;
+    $("seenOf").textContent = "taught";
+  } else {
+    $("seenCount").textContent = names.filter((n) => state.seen[seenKey(state.mode, n)] || state.seen[n]).length;
+    $("seenOf").replaceChildren("of ", Object.assign(document.createElement("span"), { id: "seenTotal", textContent: names.length }), " seen");
+  }
 }
 function updateScanButton() {
+  // In Pokémon mode with nothing taught, the big button opens the teach screen instead.
   const needsTeach = state.mode === "pokemon" && !state.learner.labels().length;
-  const ready = state.net && state.stream && !needsTeach;
+  const ready = state.net && state.stream;
   $("scanBtn").disabled = !ready || state.busy;
-  $("scanLabel").textContent = !state.net ? "Loading" : !state.stream ? "Camera off" : needsTeach ? "Teach first" : "Scan";
+  $("scanLabel").textContent = !state.net ? "Loading" : !state.stream ? "Camera off" : needsTeach ? "Teach" : "Scan";
 }
 function renderMode() {
   document.body.classList.toggle("mode-pokemon", state.mode === "pokemon");
@@ -83,10 +90,8 @@ function renderMode() {
   $("modeBtn").setAttribute("aria-label", state.mode === "pokemon" ? "Switch to World mode" : "Switch to Pokémon mode");
   updateSeen();
   updateScanButton();
-  if (state.mode === "pokemon" && !state.learner.labels().length && state.stream) {
-    setStatus("Pokémon mode learns from your own figures and plushies. Tap the counter above to teach one.");
-  } else {
-    setStatus("");
+  if (state.mode === "pokemon" && !state.learner.labels().length && state.stream && !state.busy) {
+    setStatus("Pokémon mode learns your own figures and plushies. Tap Teach to start.");
   }
 }
 
@@ -190,6 +195,7 @@ function grabFrame(target = $("still")) {
 // ---------- scanning ----------
 async function scan() {
   if (state.busy || !state.net || !state.stream) return;
+  if (state.mode === "pokemon" && !state.learner.labels().length) return openTeach();
   closeSheets(false);
   const frame = grabFrame();
   if (!frame) { setStatus("The camera hasn't started yet. Try again in a second."); return; }
@@ -437,6 +443,7 @@ function fitName(el) {
 function showUnknown(message) {
   $("unknownText").textContent = message;
   $("unknownTeachBtn").hidden = state.mode !== "pokemon";
+  $("unknownPokeBtn").hidden = state.mode !== "world";
   openSheet("unknownSheet");
 }
 
@@ -495,6 +502,18 @@ function renderVoice() {
   $("speakBtn").setAttribute("aria-pressed", String(state.voice));
 }
 
+function setMode(mode, teach = false) {
+  state.mode = mode;
+  saveText("mode", mode);
+  renderMode();
+  if (teach) return openTeach();
+  setStatus(mode === "pokemon"
+    ? (state.learner.labels().length ? "Pokémon mode: recognizes the Pokémon you've taught." : "Pokémon mode: tap Teach to show it your first Pokémon.")
+    : "World mode: recognizes animals and everyday objects.");
+  clearTimeout(setMode.t);
+  setMode.t = setTimeout(() => setStatus(""), 3500);
+}
+
 // ---------- wiring ----------
 function wire() {
   $("startBtn").addEventListener("click", startCamera);
@@ -502,6 +521,7 @@ function wire() {
   $("againBtn").addEventListener("click", scan);
   $("unknownAgainBtn").addEventListener("click", scan);
   $("unknownTeachBtn").addEventListener("click", () => openTeach());
+  $("unknownPokeBtn").addEventListener("click", () => setMode("pokemon", true));
   $("dexCloseBtn").addEventListener("click", () => closeSheets());
   $("dexTeachBtn").addEventListener("click", () => openTeach());
   $("scrim").addEventListener("click", () => closeSheets());
@@ -510,11 +530,7 @@ function wire() {
     state.facing = state.facing === "environment" ? "user" : "environment";
     startCamera();
   });
-  $("modeBtn").addEventListener("click", () => {
-    state.mode = state.mode === "world" ? "pokemon" : "world";
-    saveText("mode", state.mode);
-    renderMode();
-  });
+  $("modeBtn").addEventListener("click", () => setMode(state.mode === "world" ? "pokemon" : "world"));
   $("speakBtn").addEventListener("click", () => {
     state.voice = !state.voice;
     savePref("voice", state.voice);
@@ -549,6 +565,7 @@ function wire() {
 
 async function main() {
   wire();
+  $("version").textContent = `Version ${document.documentElement.dataset.version || "dev"}`;
   renderVoice();
   if (params.get("mode") === "pokemon" || params.get("mode") === "world") state.mode = params.get("mode");
   renderMode();

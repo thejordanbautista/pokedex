@@ -40,6 +40,27 @@ def icon_png(size: int, path: Path) -> None:
     img.save(path)
 
 
+def stamp_version(out: Path) -> None:
+    """Give every script and stylesheet a versioned URL (?v=<commit>) so phones fetch the new
+    files after each deploy instead of a cached copy, and show the version in the app."""
+    import re
+    import subprocess
+
+    try:
+        v = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+    except OSError:
+        v = ""
+    v = v or "dev"
+    html = (out / "index.html").read_text()
+    html = re.sub(r'(src|href)="((?!https?:)[^"?]+\.(?:js|css|webmanifest))"', rf'\1="\2?v={v}"', html)
+    html = html.replace("<html lang=\"en\">", f"<html lang=\"en\" data-version=\"{v}\">", 1)
+    (out / "index.html").write_text(html)
+    for js in out.glob("*.js"):
+        code = js.read_text()
+        code = re.sub(r'from "(\./[^"?]+\.js)"', rf'from "\1?v={v}"', code)
+        js.write_text(code)
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--labels", type=Path, help="ImageNet labels file (default: download)")
@@ -63,6 +84,7 @@ def main() -> None:
         except Exception as e:  # the app falls back to the model's own class names
             print(f"warning: no labels.txt ({e}); dog/cat ranges won't apply", file=sys.stderr)
 
+    stamp_version(out)
     icon_png(180, out / "icon-180.png")
     icon_png(512, out / "icon-512.png")
     (out / ".nojekyll").write_text("")

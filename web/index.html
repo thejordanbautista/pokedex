@@ -20,7 +20,7 @@
     <div class="lens" aria-hidden="true"><span class="lens-glass"></span></div>
     <div class="leds" aria-hidden="true"><i></i><i></i><i></i></div>
     <button class="seen" id="seenBtn" type="button" aria-label="Open the dex">
-      <span class="seen-count" id="seenCount">0</span><span class="seen-of">of <span id="seenTotal">0</span> seen</span>
+      <span class="seen-count" id="seenCount">0</span><span class="seen-of" id="seenOf">of <span id="seenTotal">0</span> seen</span>
     </button>
   </header>
 
@@ -90,6 +90,7 @@
     <button class="primary" id="unknownAgainBtn" type="button">Scan again</button>
     <button class="quiet" id="unknownTeachBtn" type="button" hidden>Teach it</button>
   </div>
+  <button class="link" id="unknownPokeBtn" type="button" hidden>Is it a Pokémon? Teach it</button>
 </section>
 
 <section class="sheet" id="teachSheet" role="dialog" aria-modal="true" aria-labelledby="teachTitle" hidden>
@@ -134,6 +135,7 @@
     <button class="primary" id="dexCloseBtn" type="button">Done</button>
     <button class="quiet" id="dexTeachBtn" type="button" hidden>Teach a Pokémon</button>
   </div>
+  <p class="version" id="version"></p>
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" defer></script>

@@ -37,11 +37,11 @@ const check = (cond, msg) => { if (!cond && !failed) failed = msg; };
 try {
   await page.goto(url + (mock ? "?mock&mode=pokemon" : "?mode=pokemon"));
   await page.waitForSelector(".glass.live", { timeout: 20000 });
-  await page.waitForFunction(() => document.getElementById("scanLabel").textContent === "Teach first", null, { timeout: 120000 });
+  await page.waitForFunction(() => document.getElementById("scanLabel").textContent === "Teach", null, { timeout: 120000 });
   await shot("1_empty");
 
-  await page.click("#seenBtn");
-  await page.click("#dexTeachBtn");
+  await page.click("#scanBtn"); // with nothing taught, the big button opens the teach screen
+  await page.waitForSelector("#teachSheet:not([hidden])", { timeout: 5000 });
   await page.fill("#teachInput", "bulbasaur");
   await page.press("#teachInput", "Enter");
   await page.waitForSelector("#teachGoBtn:not([disabled])", { timeout: 30000 });
@@ -74,7 +74,7 @@ try {
 
   // Persists across reloads (IndexedDB)
   await page.reload();
-  await page.waitForFunction(() => document.getElementById("seenTotal").textContent === "1", null, { timeout: 120000 });
+  await page.waitForFunction(() => document.getElementById("seenCount").textContent === "1" && document.getElementById("seenOf").textContent === "taught", null, { timeout: 120000 });
   await page.click("#seenBtn");
   await page.waitForTimeout(500);
   await shot("6_dex");
